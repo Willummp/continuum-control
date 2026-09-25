@@ -1,0 +1,6 @@
+<tipo>(<escopo>): <descrição curta no imperativo, max 72 chars>
+# Tipos: feat fix refactor test docs chore security
+# Escopos: agentes eventos anomalias missoes intervencoes ocorrencias estabilidade ops auth jpa redis mongo config deploy docs testes
+# Exemplo: feat(missoes): adiciona endpoint de iniciar missao
+# Corpo (o que + porquê):
+# Rodapé: Refs: rubrica 3-JPA
