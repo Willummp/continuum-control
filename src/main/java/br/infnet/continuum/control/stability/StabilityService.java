@@ -10,12 +10,15 @@ import br.infnet.continuum.control.mission.ImpactoIntervencao;
 import br.infnet.continuum.control.mission.MissaoRepository;
 import br.infnet.continuum.control.mission.SituacaoMissao;
 import tools.jackson.databind.ObjectMapper;
+import io.micrometer.core.instrument.Gauge;
+import io.micrometer.core.instrument.MeterRegistry;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 
 import java.time.Duration;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 
 @Service
 public class StabilityService {
@@ -33,10 +36,11 @@ public class StabilityService {
     private final int pesoExecucao;
     private final int pesoFalha;
     private final int pesoSevera;
+    private final AtomicInteger indiceAtual = new AtomicInteger(100);
 
     public StabilityService(AnomaliaRepository anomalias, MissaoRepository missoes,
                             AgenteRepository agentes, IntervencaoRepository intervencoes,
-                            StringRedisTemplate redis, ObjectMapper mapper,
+                            StringRedisTemplate redis, ObjectMapper mapper, MeterRegistry metrics,
                             @Value("${continuum.stability.ttl-seconds:60}") long ttlSeconds,
                             @Value("${continuum.stability.peso-critica:15}") int pesoCritica,
                             @Value("${continuum.stability.peso-ativa:5}") int pesoAtiva,
@@ -55,6 +59,9 @@ public class StabilityService {
         this.pesoExecucao = pesoExecucao;
         this.pesoFalha = pesoFalha;
         this.pesoSevera = pesoSevera;
+        Gauge.builder("continuum.estabilidade.indice", indiceAtual, AtomicInteger::get)
+                .description("Indice de Estabilidade Temporal 0-100")
+                .register(metrics);
     }
 
     public Map<String, Object> overview() {
@@ -106,6 +113,7 @@ public class StabilityService {
                 + falhou * pesoFalha
                 + severas * pesoSevera);
         int indice = Math.max(0, Math.min(100, 100 - penalidade));
+        indiceAtual.set(indice);
         Map<String, Object> out = Map.of(
                 "indice", indice,
                 "fatores", Map.of(

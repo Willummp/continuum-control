@@ -71,6 +71,20 @@ curl localhost:8080/anomalias/ativas -H "Authorization: Bearer $TOKEN"
 
 Swagger: `http://localhost:8080/swagger-ui.html`
 
+Listagens paginadas (`page`, `size`, `sort`, padrão 20 itens):
+```bash
+curl "localhost:8080/agentes?page=0&size=10&sort=codinome,asc" -H "Authorization: Bearer $TOKEN"
+curl "localhost:8080/missoes?agenteId=<uuid>&size=5" -H "Authorization: Bearer $TOKEN"
+```
+
+## 7b. Observabilidade
+
+```bash
+curl localhost:8080/actuator/prometheus -H "Authorization: Bearer $TOKEN"
+# métricas: continuum_missoes_iniciadas_total, continuum_missoes_concluidas_total,
+# continuum_missoes_falhas_total, continuum_estabilidade_indice
+```
+
 ## 7. Fluxo de domínio
 
 ```bash
