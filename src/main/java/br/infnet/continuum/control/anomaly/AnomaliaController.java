@@ -3,6 +3,9 @@ package br.infnet.continuum.control.anomaly;
 import br.infnet.continuum.control.occurrence.HistoricoAnomaliaDoc;
 import br.infnet.continuum.control.occurrence.HistoricoRepository;
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -25,9 +28,10 @@ public class AnomaliaController {
     }
 
     @GetMapping
-    public List<Anomalia> listar(@RequestParam(required = false) SituacaoAnomalia situacao,
-                                 @RequestParam(required = false) RiscoAnomalia risco) {
-        return service.listar(situacao, risco);
+    public Page<Anomalia> listar(@RequestParam(required = false) SituacaoAnomalia situacao,
+                                 @RequestParam(required = false) RiscoAnomalia risco,
+                                 @PageableDefault(size = 20) Pageable pageable) {
+        return service.listar(situacao, risco, pageable);
     }
 
     @GetMapping("/ativas")

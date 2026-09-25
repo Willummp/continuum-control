@@ -3,10 +3,11 @@ package br.infnet.continuum.control.event;
 import br.infnet.continuum.control.common.exception.ResourceNotFoundException;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -27,10 +28,10 @@ public class EventoService {
                 req.dataEvento(), req.localizacao(), req.importancia()));
     }
 
-    public List<EventoHistorico> listar(ImportanciaEvento importancia, LocalDate de, LocalDate ate) {
-        if (importancia != null) return eventos.findByImportancia(importancia);
-        if (de != null && ate != null) return eventos.findByDataEventoBetween(de, ate);
-        return eventos.findAll();
+    public Page<EventoHistorico> listar(ImportanciaEvento importancia, LocalDate de, LocalDate ate, Pageable pageable) {
+        if (importancia != null) return eventos.findByImportancia(importancia, pageable);
+        if (de != null && ate != null) return eventos.findByDataEventoBetween(de, ate, pageable);
+        return eventos.findAll(pageable);
     }
 
     public EventoHistorico buscar(UUID id) {

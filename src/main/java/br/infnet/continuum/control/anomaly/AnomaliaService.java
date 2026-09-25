@@ -8,6 +8,8 @@ import br.infnet.continuum.control.occurrence.HistoricoAnomaliaDoc;
 import br.infnet.continuum.control.occurrence.HistoricoRepository;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
 import java.util.List;
@@ -42,10 +44,10 @@ public class AnomaliaService {
         return salva;
     }
 
-    public List<Anomalia> listar(SituacaoAnomalia situacao, RiscoAnomalia risco) {
-        if (situacao != null) return anomalias.findBySituacao(situacao);
-        if (risco != null) return anomalias.findByRisco(risco);
-        return anomalias.findAll();
+    public Page<Anomalia> listar(SituacaoAnomalia situacao, RiscoAnomalia risco, Pageable pageable) {
+        if (situacao != null) return anomalias.findBySituacao(situacao, pageable);
+        if (risco != null) return anomalias.findByRisco(risco, pageable);
+        return anomalias.findAll(pageable);
     }
 
     public List<Anomalia> ativas() {
