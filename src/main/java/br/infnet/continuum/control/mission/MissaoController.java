@@ -1,6 +1,9 @@
 package br.infnet.continuum.control.mission;
 
 import jakarta.validation.Valid;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.access.prepost.PreAuthorize;
@@ -24,21 +27,16 @@ public class MissaoController {
     }
 
     @GetMapping
-    public List<Missao> listar(@RequestParam(required = false) SituacaoMissao situacao,
+    public Page<Missao> listar(@RequestParam(required = false) SituacaoMissao situacao,
                                @RequestParam(required = false) UUID anomaliaId,
-                               @RequestParam(required = false) UUID agenteId) {
-        List<Missao> base = service.listar(situacao, anomaliaId);
-        if (agenteId != null) {
-            return base.stream()
-                    .filter(m -> m.getAgentes().stream().anyMatch(a -> a.getId().equals(agenteId)))
-                    .toList();
-        }
-        return base;
+                               @RequestParam(required = false) UUID agenteId,
+                               @PageableDefault(size = 20) Pageable pageable) {
+        return service.listar(situacao, anomaliaId, agenteId, pageable);
     }
 
     @GetMapping("/em-execucao")
-    public List<Missao> emExecucao() {
-        return service.emExecucao();
+    public Page<Missao> emExecucao(@PageableDefault(size = 20) Pageable pageable) {
+        return service.emExecucao(pageable);
     }
 
     @GetMapping("/{id}")

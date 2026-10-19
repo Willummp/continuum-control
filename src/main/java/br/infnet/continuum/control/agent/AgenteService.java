@@ -3,11 +3,11 @@ package br.infnet.continuum.control.agent;
 import br.infnet.continuum.control.common.exception.BusinessException;
 import br.infnet.continuum.control.common.exception.ResourceNotFoundException;
 import br.infnet.continuum.control.mission.MissaoRepository;
-import br.infnet.continuum.control.mission.SituacaoMissao;
 import jakarta.validation.constraints.NotBlank;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
-import java.util.List;
 import java.util.UUID;
 
 @Service
@@ -28,10 +28,10 @@ public class AgenteService {
         return agentes.save(new Agente(req.nome(), req.codinome(), req.especialidade()));
     }
 
-    public List<Agente> listar(SituacaoAgente situacao, String especialidade) {
-        if (situacao != null) return agentes.findBySituacao(situacao);
-        if (especialidade != null) return agentes.findByEspecialidadeIgnoreCase(especialidade);
-        return agentes.findAll();
+    public Page<Agente> listar(SituacaoAgente situacao, String especialidade, Pageable pageable) {
+        if (situacao != null) return agentes.findBySituacao(situacao, pageable);
+        if (especialidade != null) return agentes.findByEspecialidadeIgnoreCase(especialidade, pageable);
+        return agentes.findAll(pageable);
     }
 
     public Agente buscar(UUID id) {

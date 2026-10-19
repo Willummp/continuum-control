@@ -1,5 +1,7 @@
 package br.infnet.continuum.control.agent;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import java.util.List;
 import java.util.UUID;
@@ -7,4 +9,6 @@ import java.util.UUID;
 public interface AgenteRepository extends JpaRepository<Agente, UUID> {
     List<Agente> findBySituacao(SituacaoAgente situacao);
     List<Agente> findByEspecialidadeIgnoreCase(String especialidade);
+    Page<Agente> findBySituacao(SituacaoAgente situacao, Pageable pageable);
+    Page<Agente> findByEspecialidadeIgnoreCase(String especialidade, Pageable pageable);
 }
