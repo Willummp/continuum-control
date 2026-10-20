@@ -1,5 +1,6 @@
 package br.infnet.continuum.control.mission;
 
+import br.infnet.continuum.control.anomaly.SituacaoAnomalia;
 import jakarta.persistence.*;
 import java.time.Instant;
 import java.util.UUID;
@@ -24,8 +25,9 @@ public class Encerramento {
     @Column(name = "impacto_observado", columnDefinition = "TEXT")
     private String impactoObservado;
 
-    @Column(name = "situacao_final_anomalia", length = 30)
-    private String situacaoFinalAnomalia;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "situacao_final_anomalia", length = 20)
+    private SituacaoAnomalia situacaoFinalAnomalia;
 
     @Column(columnDefinition = "TEXT")
     private String observacoes;
@@ -35,7 +37,7 @@ public class Encerramento {
 
     protected Encerramento() {}
 
-    public Encerramento(Missao missao, String resultado, String resumo, String impactoObservado, String situacaoFinalAnomalia, String observacoes) {
+    public Encerramento(Missao missao, String resultado, String resumo, String impactoObservado, SituacaoAnomalia situacaoFinalAnomalia, String observacoes) {
         this.id = UUID.randomUUID();
         this.missao = missao;
         this.resultado = resultado;
@@ -51,7 +53,7 @@ public class Encerramento {
     public String getResultado() { return resultado; }
     public String getResumo() { return resumo; }
     public String getImpactoObservado() { return impactoObservado; }
-    public String getSituacaoFinalAnomalia() { return situacaoFinalAnomalia; }
+    public SituacaoAnomalia getSituacaoFinalAnomalia() { return situacaoFinalAnomalia; }
     public String getObservacoes() { return observacoes; }
     public Instant getEncerradaEm() { return encerradaEm; }
 }

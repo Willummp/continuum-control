@@ -11,8 +11,12 @@ import br.infnet.continuum.control.common.exception.BusinessException;
 import br.infnet.continuum.control.common.exception.ResourceNotFoundException;
 import br.infnet.continuum.control.occurrence.HistoricoAnomaliaDoc;
 import br.infnet.continuum.control.occurrence.HistoricoRepository;
+import io.micrometer.core.instrument.Counter;
+import io.micrometer.core.instrument.MeterRegistry;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,7 +33,7 @@ public class MissaoService {
                                @NotNull PrioridadeMissao prioridade) {}
     public record AutorizarReq(@NotBlank String responsavel, String observacao) {}
     public record ConcluirReq(@NotBlank String resultado, String resumo,
-                              String impactoObservado, String situacaoFinalAnomalia, String observacoes) {}
+                              String impactoObservado, SituacaoAnomalia situacaoFinalAnomalia, String observacoes) {}
 
     private final MissaoRepository missoes;
     private final AnomaliaRepository anomalias;
@@ -39,11 +43,14 @@ public class MissaoService {
     private final EncerramentoRepository encerramentos;
     private final HistoricoRepository historico;
     private final StringRedisTemplate redis;
+    private final Counter iniciadas;
+    private final Counter concluidas;
+    private final Counter falhas;
 
     public MissaoService(MissaoRepository missoes, AnomaliaRepository anomalias, AgenteRepository agentes,
                          AutorizacaoRepository autorizacoes, IntervencaoRepository intervencoes,
                          EncerramentoRepository encerramentos, HistoricoRepository historico,
-                         StringRedisTemplate redis) {
+                         StringRedisTemplate redis, MeterRegistry metrics) {
         this.missoes = missoes;
         this.anomalias = anomalias;
         this.agentes = agentes;
@@ -52,6 +59,9 @@ public class MissaoService {
         this.encerramentos = encerramentos;
         this.historico = historico;
         this.redis = redis;
+        this.iniciadas = metrics.counter("continuum.missoes.iniciadas");
+        this.concluidas = metrics.counter("continuum.missoes.concluidas");
+        this.falhas = metrics.counter("continuum.missoes.falhas");
     }
 
     public Missao criar(CreateMissao req, String ator) {
@@ -68,14 +78,15 @@ public class MissaoService {
         return salva;
     }
 
-    public List<Missao> listar(SituacaoMissao situacao, UUID anomaliaId) {
-        if (situacao != null) return missoes.findBySituacao(situacao);
-        if (anomaliaId != null) return missoes.findByAnomalia_Id(anomaliaId);
-        return missoes.findAll();
+    public Page<Missao> listar(SituacaoMissao situacao, UUID anomaliaId, UUID agenteId, Pageable pageable) {
+        if (agenteId != null) return missoes.findByAgentes_Id(agenteId, pageable);
+        if (situacao != null) return missoes.findBySituacao(situacao, pageable);
+        if (anomaliaId != null) return missoes.findByAnomalia_Id(anomaliaId, pageable);
+        return missoes.findAll(pageable);
     }
 
-    public List<Missao> emExecucao() {
-        return missoes.findBySituacao(SituacaoMissao.EM_EXECUCAO);
+    public Page<Missao> emExecucao(Pageable pageable) {
+        return missoes.findBySituacao(SituacaoMissao.EM_EXECUCAO, pageable);
     }
 
     public Missao buscar(UUID id) {
@@ -163,6 +174,7 @@ public class MissaoService {
         }
         historico.save(new HistoricoAnomaliaDoc(an.getId().toString(), "MISSAO_INICIADA", ator,
                 Map.of("missaoId", m.getId().toString())));
+        iniciadas.increment();
         invalidateCache();
         return m;
     }
@@ -179,12 +191,13 @@ public class MissaoService {
                 req.impactoObservado(), req.situacaoFinalAnomalia(), req.observacoes()));
         if (req.situacaoFinalAnomalia() != null) {
             Anomalia an = m.getAnomalia();
-            an.setSituacao(SituacaoAnomalia.valueOf(req.situacaoFinalAnomalia()));
+            an.setSituacao(req.situacaoFinalAnomalia());
             anomalias.save(an);
         }
         liberarAgentes(m, false);
         historico.save(new HistoricoAnomaliaDoc(m.getAnomalia().getId().toString(), "MISSAO_CONCLUIDA", ator,
                 Map.of("missaoId", m.getId().toString(), "resultado", req.resultado())));
+        concluidas.increment();
         invalidateCache();
         return m;
     }
@@ -203,6 +216,7 @@ public class MissaoService {
         liberarAgentes(m, true);
         historico.save(new HistoricoAnomaliaDoc(m.getAnomalia().getId().toString(), "MISSAO_FALHOU", ator,
                 Map.of("missaoId", m.getId().toString())));
+        falhas.increment();
         invalidateCache();
         return m;
     }
