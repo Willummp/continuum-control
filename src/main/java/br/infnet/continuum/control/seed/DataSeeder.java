@@ -23,7 +23,7 @@ import org.springframework.stereotype.Component;
 import java.time.LocalDate;
 
 @Component
-@Profile({"dev", "docker", "default"})
+@Profile({"dev", "docker", "test"})
 public class DataSeeder implements CommandLineRunner {
 
     private final boolean enabled;
