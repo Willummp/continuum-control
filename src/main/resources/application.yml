@@ -22,12 +22,12 @@ spring:
     locations: classpath:db/migration
     default-schema: public
   data:
-    mongodb:
-      uri: ${MONGO_URI:mongodb://continuum:continuum@localhost:27017/continuum?authSource=admin}
     redis:
       host: ${REDIS_HOST:localhost}
       port: ${REDIS_PORT:6379}
       timeout: 2s
+  mongodb:
+    uri: ${MONGO_URI:mongodb://continuum:continuum@localhost:27017/continuum?authSource=admin}
   docker:
     compose:
       enabled: false
